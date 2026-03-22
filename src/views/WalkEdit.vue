@@ -12,6 +12,7 @@ import {
   defaultWalkTitle,
   removeWalk
 } from "../lib/walks";
+import { uploadWalkPhoto } from "../lib/walkPhotos";
 
 const route = useRoute();
 const router = useRouter();
@@ -19,6 +20,9 @@ const router = useRouter();
 const uid = computed(() => authState.user?.uid);
 const walkId = computed(() => route.params.walkId);
 const isNew = computed(() => !walkId.value);
+
+const uploadingWalkPhoto = ref(false);
+const lastWalkPhotoName = ref("");
 
 const loading = ref(true);
 const saving = ref(false);
@@ -36,6 +40,7 @@ const form = ref({
   weather: "",
   groundConditions: "",
   ratings: {}, // ok to keep even if you’re not rendering ratings yet
+  photos: [],
 });
 
 function toggleDog(dogId) {
@@ -43,6 +48,31 @@ function toggleDog(dogId) {
   if (set.has(dogId)) set.delete(dogId);
   else set.add(dogId);
   form.value.dogIds = Array.from(set);
+}
+
+async function onWalkPhotoSelected(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const fileName = file.name;
+  e.target.value = ""; // allow re-pick same file
+
+  if (isNew.value) {
+    alert("Save the walk first, then add photos.");
+    return;
+  }
+
+  uploadingWalkPhoto.value = true;
+  try {
+    const res = await uploadWalkPhoto(uid.value, walkId.value, file);
+    // update local state immediately so user sees it without reload
+    form.value.photos = [...(form.value.photos ?? []), { ...res, createdAt: new Date().toISOString() }];
+    lastWalkPhotoName.value = fileName;
+  } catch (err) {
+    alert(err?.message ?? "Failed to upload photo");
+  } finally {
+    uploadingWalkPhoto.value = false;
+  }
 }
 
 async function load() {
@@ -69,6 +99,7 @@ async function load() {
         weather: walk.weather ?? "",
         groundConditions: walk.groundConditions ?? "",
         ratings: walk.ratings ?? {},
+        photos: walk.photos ?? [],
       };
     } else {
       // sensible defaults for manual add
@@ -189,6 +220,50 @@ onMounted(load);
         </section>
 
         <section class="rounded-xl border bg-white p-4 space-y-3">
+  <h2 class="font-semibold">Walk photos</h2>
+
+  <div class="flex flex-wrap gap-2">
+    <!-- existing photos -->
+    <a
+      v-for="p in form.photos"
+      :key="p.id || p.url"
+      :href="p.url"
+      target="_blank"
+      rel="noreferrer"
+      class="block h-24 w-24 overflow-hidden rounded-lg border bg-slate-100"
+      title="Open photo"
+    >
+      <img :src="p.url" alt="" class="h-full w-full object-cover" />
+    </a>
+
+    <!-- add photo tile (at the right / end) -->
+    <label
+      class="grid h-24 w-24 cursor-pointer place-items-center rounded-lg border bg-white text-4xl font-semibold text-slate-500 hover:bg-slate-50"
+      :class="isNew ? 'pointer-events-none opacity-60' : ''"
+      title="Add photo"
+      aria-label="Add photo"
+    >
+      +
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="hidden"
+        @change="onWalkPhotoSelected"
+      />
+    </label>
+  </div>
+
+  <p v-if="uploadingWalkPhoto" class="text-sm text-slate-600">Uploading…</p>
+  <p v-else-if="lastWalkPhotoName" class="text-sm text-emerald-700">
+    Uploaded: {{ lastWalkPhotoName }}
+  </p>
+  <p v-else-if="isNew" class="text-xs text-slate-500">
+    Save the walk first, then you can add photos.
+  </p>
+</section>
+
+        <section class="rounded-xl border bg-white p-4 space-y-3">
             <h2 class="font-semibold">Conditions</h2>
 
             <label class="block">
@@ -210,30 +285,40 @@ onMounted(load);
             </label>
         </section>
 
-      <section class="rounded-xl border bg-white p-4">
-        <h2 class="font-semibold">Dogs</h2>
-        <p class="mt-1 text-sm text-slate-600">Select one or more dogs for this walk.</p>
+      <section class="rounded-xl border bg-white p-4 space-y-3">
+        <h2 class="font-semibold">Which dogs came on this walk?</h2>
 
-        <div v-if="dogs.length === 0" class="mt-3 text-sm text-slate-600">
-          No dogs yet. Add dogs first.
-          <RouterLink class="text-slate-900 underline" to="/dogs/new">Add a dog</RouterLink>
-        </div>
-
-        <div v-else class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label
+        <div class="space-y-2">
+            <label
             v-for="dog in dogs"
             :key="dog.id"
-            class="flex items-center gap-2 rounded-lg border p-2"
-          >
+            class="flex items-center gap-3 rounded-lg border p-2 hover:bg-slate-50"
+            >
             <input
-              type="checkbox"
-              :checked="form.dogIds.includes(dog.id)"
-              @change="toggleDog(dog.id)"
+                type="checkbox"
+                class="h-4 w-4"
+                :value="dog.id"
+                v-model="form.dogIds"
             />
-            <span class="text-sm">{{ dog.name }}</span>
-          </label>
+
+            <div class="h-9 w-9 overflow-hidden rounded-full border bg-slate-100 shrink-0">
+                <img
+                    v-if="dog.photoUrl"
+                    :src="dog.photoUrl"
+                    alt=""
+                    class="h-full w-full object-cover"
+                />
+                <div v-else class="grid h-full w-full place-items-center text-sm">
+                🐶
+                </div>
+            </div>
+
+            <span class="font-medium text-slate-900">
+                {{ dog.name }}
+            </span>
+            </label>
         </div>
-      </section>
+    </section>
 
       <section class="rounded-xl border bg-white p-4 space-y-3">
         <h2 class="font-semibold">Times</h2>

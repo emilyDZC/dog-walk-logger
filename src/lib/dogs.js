@@ -1,17 +1,5 @@
 import { db } from "./firebase";
-import {
-  collection,
-  doc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  getDoc,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp,
-} from "firebase/firestore";
+import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, serverTimestamp } from "firebase/firestore";
 
 function dogsCol(uid) {
   return collection(db, "users", uid, "dogs");
@@ -41,6 +29,8 @@ export async function createDog(uid, data) {
     favourite_food: data.favourite_food ?? "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+    photoUrl: data.photoUrl ?? "",
+    photoPath: data.photoPath ?? "",
   };
   const ref = await addDoc(dogsCol(uid), payload);
   return ref.id;
@@ -58,5 +48,9 @@ export async function updateDog(uid, dogId, data) {
 }
 
 export async function removeDog(uid, dogId) {
+  await deleteDoc(dogDoc(uid, dogId));
+}
+
+export async function deleteDog(uid, dogId) {
   await deleteDoc(dogDoc(uid, dogId));
 }

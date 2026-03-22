@@ -10,6 +10,7 @@ const loading = ref(true);
 const error = ref("");
 const walks = ref([]);
 const dogNameById = ref({});
+const dogById = ref({});
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -44,11 +45,19 @@ function fmtDistance(meters) {
 function dogNamesForWalk(walk) {
   const ids = walk?.dogIds ?? [];
   if (!ids.length) return "—";
-  const names = ids.map((id) => dogNameById.value[id]).filter(Boolean);
-  // If a dog was deleted later, you might have an id with no name; show a fallback
+  const names = ids.map((id) => dogById.value[id]?.name).filter(Boolean);
   const missingCount = ids.length - names.length;
   if (missingCount > 0) names.push(`${missingCount} unknown`);
   return names.join(", ");
+}
+
+function dogPhotosForWalk(walk) {
+  const ids = walk?.dogIds ?? [];
+  // return objects for dogs that have a photoUrl
+  return ids
+    .map((id) => dogById.value[id])
+    .filter((d) => d?.photoUrl)
+    .map((d) => ({ name: d.name, photoUrl: d.photoUrl }));
 }
 
 async function load() {
@@ -57,8 +66,14 @@ async function load() {
   try {
     const [dogs, w] = await Promise.all([listDogs(uid.value), listWalks(uid.value)]);
 
-    dogNameById.value = Object.fromEntries(
-      dogs.map((d) => [d.id, d.name || "(Unnamed)"])
+    dogById.value = Object.fromEntries(
+        dogs.map((d) => [
+            d.id,
+            {
+                name: d.name || "(Unnamed)",
+                photoUrl: d.photoUrl || "",
+            },
+        ])
     );
 
     walks.value = w;
@@ -89,53 +104,63 @@ onMounted(load);
     <p v-else-if="error" class="mt-4 text-sm text-red-600">{{ error }}</p>
 
     <div v-else class="mt-4 space-y-3">
-      <div
+      <RouterLink
         v-for="walk in walks"
         :key="walk.id"
-        class="rounded-xl border bg-white p-4 shadow-sm"
-        >
-        <div class="min-w-0">
+        :to="`/walks/${walk.id}`"
+        class="block rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300"
+        :title="`Edit walk: ${walk.title || 'Walk'}`"
+      >
+        <div class="flex items-start gap-4">
+          <!-- Left: walk details -->
+          <div class="min-w-0 flex-1">
             <p class="truncate text-lg font-semibold">
-            {{ walk.title || "Walk" }}
+              {{ walk.title || "Walk" }}
             </p>
 
             <p class="mt-1 text-sm text-slate-600">
-                <span class="text-slate-900">{{ fmtWalkStart(walk.startedAt) }}</span>
+              <span class="text-slate-900">{{ fmtWalkStart(walk.startedAt) }}</span>
             </p>
 
             <p class="mt-1 text-sm text-slate-600">
-                Distance: <span class="text-slate-900">{{ fmtDistance(walk.distanceMeters) }}</span>
+              Distance:
+              <span class="text-slate-900">{{ fmtDistance(walk.distanceMeters) }}</span>
             </p>
 
             <p v-if="walk.description" class="mt-2 text-sm text-slate-700">
-            {{ walk.description }}
+              {{ walk.description }}
             </p>
-        </div>
 
-        <div class="mt-3 flex justify-end">
-            <RouterLink
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 "
-            :to="`/walks/${walk.id}`"
-            aria-label="Edit walk"
-            title="Edit"
-            >
-            <!-- Pencil icon (inline SVG, no dependency) -->
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-5 w-5"
-            >
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-            </RouterLink>
+            <div class="mt-2 flex items-center gap-3">
+              <div v-if="dogPhotosForWalk(walk).length" class="flex -space-x-2">
+                <div
+                  v-for="d in dogPhotosForWalk(walk)"
+                  :key="d.photoUrl"
+                  class="h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-slate-100"
+                  :title="d.name"
+                >
+                  <img :src="d.photoUrl" alt="" class="h-full w-full object-cover" />
+                </div>
+              </div>
+
+              <!-- If you ever want names too, you can add them back here -->
+              <!-- <div class="text-sm text-slate-600 truncate">
+                <span class="text-slate-900">{{ dogNamesForWalk(walk) }}</span>
+              </div> -->
+            </div>
+          </div>
+
+          <!-- Right: first walk photo thumbnail -->
+          <img
+            v-if="walk.photos?.length && walk.photos[0]?.url"
+            :src="walk.photos[0].url"
+            alt=""
+            class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-slate-100 object-cover"
+            loading="lazy"
+          />
         </div>
-        </div>
+      </RouterLink>
+    </div>
 
       <div v-if="walks.length === 0" class="mt-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center shadow-sm backdrop-blur">
         <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-200 to-pink-200 text-3xl">
@@ -151,5 +176,4 @@ onMounted(load);
         </RouterLink>
         </div>
     </div>
-  </div>
 </template>

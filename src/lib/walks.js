@@ -76,7 +76,9 @@ export async function createWalk(uid, data) {
 
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    };
+
+    photos: [],
+  };
 
   const ref = await addDoc(walksCol(uid), payload);
   return ref.id;

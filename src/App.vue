@@ -18,7 +18,7 @@ async function handleSignOut() {
       <nav class="mx-auto flex max-w-4xl items-center gap-4 px-4 py-3">
         <RouterLink to="/" class="flex items-center gap-2 font-extrabold tracking-tight">
           <span
-            class="grid h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-amber-400 to-pink-500 shadow-sm"
+            class="grid h-10 w-10 overflow-hidden rounded-xl shadow-sm"
             aria-hidden="true"
             title="DogWalks"
           >

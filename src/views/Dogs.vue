@@ -52,43 +52,38 @@ onMounted(load);
     <p v-else-if="error" class="mt-4 text-sm text-red-600">{{ error }}</p>
 
     <div v-else class="mt-4 space-y-3">
-      <div
+      <RouterLink
         v-for="dog in dogs"
         :key="dog.id"
-        class="rounded-xl border bg-white p-4 shadow-sm"
+        :to="`/dogs/${dog.id}`"
+        class="block rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300"
+        :title="`Edit dog: ${dog.name || 'Dog'}`"
       >
-        <div class="flex items-start gap-3">
-          <div class="min-w-0">
-            <p class="truncate text-lg font-semibold">{{ dog.name || "(Unnamed)" }}</p>
-            <p class="mt-1 text-sm text-slate-600">
-              Birthday: <span class="text-slate-800">{{ dog.birthday || "—" }}</span>
-              <span class="mx-2 text-slate-300">•</span>
-              Weight: <span class="text-slate-800">{{ dog.weight || "—" }}</span>
-            </p>
-            <p class="mt-1 text-sm text-slate-600">
-              Favourite food:
-              <span class="text-slate-800">{{ dog.favourite_food || "—" }}</span>
-            </p>
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 overflow-hidden rounded-full border bg-slate-100 shrink-0">
+            <img
+              v-if="dog.photoUrl"
+              :src="dog.photoUrl"
+              alt=""
+              class="h-full w-full object-cover"
+              loading="lazy"
+            />
+            <div v-else class="grid h-full w-full place-items-center">
+              🐶
+            </div>
           </div>
 
-          <div class="ml-auto flex shrink-0 gap-2">
-            <RouterLink
-              class="rounded-lg bg-slate-200 px-3 py-2 text-sm"
-              :to="`/dogs/${dog.id}`"
-            >
-              Edit
-            </RouterLink>
-            <button
-              class="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white"
-              @click="deleteDog(dog)"
-            >
-              Delete
-            </button>
+          <div class="min-w-0">
+            <p class="truncate text-lg font-semibold">
+              {{ dog.name || "Unnamed dog" }}
+            </p>
+            <p v-if="dog.birthday" class="mt-0.5 text-sm text-slate-600">
+              Birthday: <span class="text-slate-900">{{ dog.birthday }}</span>
+            </p>
           </div>
         </div>
-      </div>
-
-      <p v-if="dogs.length === 0" class="text-slate-600">No dogs yet. Add one!</p>
+      </RouterLink>
     </div>
+      <p v-if="dogs.length === 0" class="text-slate-600">No dogs yet. Add one!</p>
   </div>
 </template>
