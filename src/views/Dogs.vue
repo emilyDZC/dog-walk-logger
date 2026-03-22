@@ -39,7 +39,7 @@ onMounted(load);
 <template>
   <div class="py-2">
     <div class="flex items-center gap-3">
-      <h1 class="text-xl font-semibold">Dogs</h1>
+      <h1 class="text-xl font-semibold">My Dogs</h1>
       <RouterLink
         class="ml-auto rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
         to="/dogs/new"

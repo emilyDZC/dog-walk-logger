@@ -114,7 +114,7 @@ onMounted(load);
 
         <div class="mt-3 flex justify-end">
             <RouterLink
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 "
             :to="`/walks/${walk.id}`"
             aria-label="Edit walk"
             title="Edit"
@@ -137,7 +137,19 @@ onMounted(load);
         </div>
         </div>
 
-      <p v-if="walks.length === 0" class="text-slate-600">No walks yet. Add one!</p>
+      <div v-if="walks.length === 0" class="mt-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center shadow-sm backdrop-blur">
+        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-200 to-pink-200 text-3xl">
+            🐾
+        </div>
+        <p class="mt-3 text-lg font-extrabold">No walks yet</p>
+        <p class="mt-1 text-sm text-slate-700">Add your first walk.</p>
+        <RouterLink
+            to="/walks/new"
+            class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
+        >
+            Add a walk
+        </RouterLink>
+        </div>
     </div>
   </div>
 </template>

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { authState } from "../state/authState";
+import { authState, waitForAuthReady } from "../state/authState";
 
-import Home from "../views/Home.vue";
 import Dogs from "../views/Dogs.vue";
 import DogEdit from "../views/DogEdit.vue";
 import Walks from "../views/Walks.vue";
@@ -10,11 +9,11 @@ import Login from "../views/Login.vue";
 
 const routes = [
   { path: "/login", name: "login", component: Login },
-  { path: "/", name: "home", component: Home },
+  { path: "/", name: "home", component: Walks, meta: { requiresAuth: true } },
   { path: "/dogs", name: "dogs", component: Dogs },
   { path: "/dogs/new", name: "dog-new", component: DogEdit, meta: { requiresAuth: true } },
   { path: "/dogs/:dogId", name: "dog-edit", component: DogEdit, meta: { requiresAuth: true } },
-  { path: "/walks", name: "walks", component: Walks },
+  { path: "/walks", redirect: "/" },
   { path: "/walks/new", name: "walk-new", component: WalkEdit, meta: { requiresAuth: true } },
   { path: "/walks/:walkId", name: "walk-edit", component: WalkEdit, meta: { requiresAuth: true } },
 ];
@@ -24,15 +23,19 @@ export const router = createRouter({
   routes,
 });
 
-router.beforeEach((to) => {
-  // wait until auth is known
-  if (!authState.ready && to.meta.requiresAuth) return false;
+router.beforeEach(async (to) => {
+  if (to.meta.requiresAuth) {
+    await waitForAuthReady();
 
-  if (to.meta.requiresAuth && !authState.user) {
-    return { name: "login" };
+    if (!authState.user) {
+      // send logged-out users to signup-first page
+      return { name: "login" };
+    }
   }
 
-  if (to.name === "login" && authState.user) {
-    return { name: "home" };
+  // If already logged in, keep them out of /login
+  if (to.name === "login") {
+    await waitForAuthReady();
+    if (authState.user) return "/";
   }
 });

@@ -15,3 +15,15 @@ export function initAuthListener() {
     authState.ready = true;
   });
 }
+
+export function waitForAuthReady() {
+  if (authState.ready) return Promise.resolve();
+  return new Promise((resolve) => {
+    const t = setInterval(() => {
+      if (authState.ready) {
+        clearInterval(t);
+        resolve();
+      }
+    }, 20);
+  });
+}

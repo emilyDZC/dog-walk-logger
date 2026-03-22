@@ -5,7 +5,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const mode = ref("signin"); // or "signup"
+const mode = ref("signup"); // or "signin"
 const email = ref("");
 const password = ref("");
 const error = ref("");
