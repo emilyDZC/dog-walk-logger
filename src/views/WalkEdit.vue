@@ -81,8 +81,6 @@ async function load() {
 
   try {
     dogs.value = await listDogs(uid.value);
-    console.log("new: ", isNew.value)
-    console.log("dogs: ", dogs.value)
 
     if (isNew.value && dogs.value.length === 0) {
       router.replace("/dogs/new");
@@ -169,8 +167,8 @@ async function save() {
     };
 
     if (isNew.value) {
-      const newId = await createWalk(uid.value, payload);
-      router.replace(`/walks/${newId}`);
+      await createWalk(uid.value, payload);
+      router.replace(`/walks`);
     } else {
       await updateWalk(uid.value, walkId.value, payload);
       router.push("/walks");
