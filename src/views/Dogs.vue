@@ -1,11 +1,16 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { authState } from "../state/authState";
 import { listDogs, removeDog } from "../lib/dogs";
 
 const loading = ref(true);
 const error = ref("");
 const dogs = ref([]);
+
+const route = useRoute();
+const router = useRouter();
+const toast = ref("");
 
 const uid = computed(() => authState.user?.uid);
 
@@ -33,7 +38,22 @@ async function deleteDog(dog) {
   }
 }
 
-onMounted(load);
+onMounted(() => {
+  load();
+
+  const msg = route.query.toast;
+  if (typeof msg === "string" && msg.trim()) {
+    toast.value = msg;
+
+    // clear it from the URL so refresh doesn't show it again
+    router.replace({ query: { ...route.query, toast: undefined } });
+
+    // auto-hide after a moment
+    setTimeout(() => {
+      toast.value = "";
+    }, 2500);
+  }
+});
 </script>
 
 <template>
@@ -51,7 +71,17 @@ onMounted(load);
     <p v-if="loading" class="mt-4 text-slate-600">Loading…</p>
     <p v-else-if="error" class="mt-4 text-sm text-red-600">{{ error }}</p>
 
+
     <div v-else class="mt-4 space-y-3">
+      
+      <div
+        v-if="toast"
+        class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"
+        role="status"
+      >
+        {{ toast }}
+      </div>
+
       <RouterLink
         v-for="dog in dogs"
         :key="dog.id"

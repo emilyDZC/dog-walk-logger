@@ -11,6 +11,7 @@ const error = ref("");
 const walks = ref([]);
 const dogNameById = ref({});
 const dogById = ref({});
+const hasDogs = ref(false);
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -77,6 +78,7 @@ async function load() {
     );
 
     walks.value = w;
+    hasDogs.value = (dogs?.length ?? 0) > 0;
   } catch (e) {
     error.value = e?.message ?? "Failed to load walks";
   } finally {
@@ -164,16 +166,24 @@ onMounted(load);
 
       <div v-if="walks.length === 0" class="mt-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center shadow-sm backdrop-blur">
         <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-200 to-pink-200 text-3xl">
-            🐾
+          🐾
         </div>
-        <p class="mt-3 text-lg font-extrabold">No walks yet</p>
-        <p class="mt-1 text-sm text-slate-700">Add your first walk.</p>
+
+        <p class="mt-3 text-lg font-extrabold">
+          {{ hasDogs ? "No walks yet" : "Add a dog first" }}
+        </p>
+
+        <p class="mt-1 text-sm text-slate-700">
+          <span v-if="hasDogs">Add your first walk.</span>
+          <span v-else>You’ll need at least one dog before you can save a walk.</span>
+        </p>
+
         <RouterLink
-            to="/walks/new"
-            class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
+          :to="hasDogs ? '/walks/new' : '/dogs/new'"
+          class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
         >
-            Add a walk
+          {{ hasDogs ? "Add a walk" : "Add a dog" }}
         </RouterLink>
-        </div>
+      </div>
     </div>
 </template>

@@ -82,6 +82,11 @@ async function load() {
   try {
     dogs.value = await listDogs(uid.value);
 
+    if (isNew.value && dogs.value.length === 0) {
+      router.replace("/dogs/new");
+      return;
+    }
+
     if (!isNew.value) {
       const walk = await getWalk(uid.value, walkId.value);
       if (!walk) {

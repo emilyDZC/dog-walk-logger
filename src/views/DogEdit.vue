@@ -68,8 +68,11 @@
             }
 
             if (isNew.value) {
-                const newId = await createDog(uid.value, form.value);
-                router.replace(`/dogs/${newId}`);
+                await createDog(uid.value, form.value);
+                router.push({
+                path: "/dogs",
+                query: { toast: `New dog saved: ${form.value.name}` },
+                });
             } else {
                 await updateDog(uid.value, dogId.value, form.value);
                 router.push("/dogs");
