@@ -43,11 +43,18 @@ const form = ref({
   photos: [],
 });
 
+function isDogSelected(dogId) {
+  return Array.isArray(form.value.dogIds) && form.value.dogIds.includes(dogId);
+}
+
 function toggleDog(dogId) {
-  const set = new Set(form.value.dogIds);
-  if (set.has(dogId)) set.delete(dogId);
-  else set.add(dogId);
-  form.value.dogIds = Array.from(set);
+  if (!Array.isArray(form.value.dogIds)) form.value.dogIds = [];
+
+  if (form.value.dogIds.includes(dogId)) {
+    form.value.dogIds = form.value.dogIds.filter((id) => id !== dogId);
+  } else {
+    form.value.dogIds = [...form.value.dogIds, dogId];
+  }
 }
 
 async function onWalkPhotoSelected(e) {
@@ -107,6 +114,10 @@ async function load() {
         photos: walk.photos ?? [],
       };
     } else {
+      if (!Array.isArray(form.value.dogIds)) form.value.dogIds = [];
+      if (form.value.dogIds.length === 0 && dogs.value.length > 0) {
+        form.value.dogIds = [dogs.value[0].id];
+      }
       // sensible defaults for manual add
       const now = new Date();
       form.value.startedAtLocal = dateToLocalInputValue(now);
@@ -142,6 +153,11 @@ async function save() {
     }
     if (!form.value.dogIds.length) {
       error.value = "Select at least one dog.";
+      return;
+    }
+
+    if (!Array.isArray(form.value.dogIds) || form.value.dogIds.length === 0) {
+      error.value = "Please select at least one dog before saving the walk.";
       return;
     }
 
@@ -291,39 +307,49 @@ onMounted(load);
         </section>
 
       <section class="rounded-xl border bg-white p-4 space-y-3">
-        <h2 class="font-semibold">Which dogs came on this walk?</h2>
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-semibold">Dogs on this walk</h2>
+          <p class="text-xs text-slate-500">Tap an avatar to select/deselect</p>
+        </div>
 
-        <div class="space-y-2">
-            <label
+        <div class="flex flex-wrap gap-2">
+          <button
             v-for="dog in dogs"
             :key="dog.id"
-            class="flex items-center gap-3 rounded-lg border p-2 hover:bg-slate-50"
+            type="button"
+            class="group relative"
+            :title="isDogSelected(dog.id) ? `Deselect ${dog.name}` : `Select ${dog.name}`"
+            @click="toggleDog(dog.id)"
+          >
+            <div
+              class="h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-slate-100 shadow-sm transition"
+              :class="isDogSelected(dog.id) ? 'opacity-100 grayscale-0' : 'opacity-60 grayscale'"
             >
-            <input
-                type="checkbox"
-                class="h-4 w-4"
-                :value="dog.id"
-                v-model="form.dogIds"
-            />
-
-            <div class="h-9 w-9 overflow-hidden rounded-full border bg-slate-100 shrink-0">
-                <img
-                    v-if="dog.photoUrl"
-                    :src="dog.photoUrl"
-                    alt=""
-                    class="h-full w-full object-cover"
-                />
-                <div v-else class="grid h-full w-full place-items-center text-sm">
+              <img
+                v-if="dog.photoUrl"
+                :src="dog.photoUrl"
+                alt=""
+                class="h-full w-full object-cover"
+              />
+              <div v-else class="grid h-full w-full place-items-center text-lg">
                 🐶
-                </div>
+              </div>
             </div>
 
-            <span class="font-medium text-slate-900">
-                {{ dog.name }}
-            </span>
-            </label>
+            <!-- tiny check indicator -->
+            <div
+              v-if="isDogSelected(dog.id)"
+              class="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-emerald-500 text-[11px] font-extrabold text-white ring-2 ring-white"
+            >
+              ✓
+            </div>
+          </button>
         </div>
-    </section>
+
+        <p v-if="error && (!form.dogIds || form.dogIds.length === 0)" class="text-sm text-red-600">
+          {{ error }}
+        </p>
+      </section>
 
       <section class="rounded-xl border bg-white p-4 space-y-3">
         <h2 class="font-semibold">Times</h2>
@@ -376,6 +402,7 @@ onMounted(load);
 
       <button
         class="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
+        type="submit"
         :disabled="saving"
       >
         {{ saving ? "Saving…" : "Save walk" }}
