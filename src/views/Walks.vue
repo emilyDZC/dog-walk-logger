@@ -94,96 +94,112 @@ onMounted(load);
     <div class="flex items-center gap-3">
       <h1 class="text-xl font-semibold">Walks</h1>
 
+      <!-- Header CTA: changes based on whether user has dogs -->
       <RouterLink
         class="ml-auto rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-        to="/walks/new"
+        :to="hasDogs ? '/walks/new' : '/dogs/new'"
       >
-        Add walk (manual)
+        {{ hasDogs ? "Add walk" : "Add dog" }}
       </RouterLink>
     </div>
 
     <p v-if="loading" class="mt-4 text-slate-600">Loading…</p>
     <p v-else-if="error" class="mt-4 text-sm text-red-600">{{ error }}</p>
 
-    <div v-else class="mt-4 space-y-3">
-      <RouterLink
-        v-for="walk in walks"
-        :key="walk.id"
-        :to="`/walks/${walk.id}`"
-        class="block rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300"
-        :title="`Edit walk: ${walk.title || 'Walk'}`"
-      >
-        <div class="flex items-start gap-4">
-          <!-- Left: walk details -->
-          <div class="min-w-0 flex-1">
-            <p class="truncate text-lg font-semibold">
-              {{ walk.title || "Walk" }}
-            </p>
+    <!-- Loaded, no error -->
+    <template v-else>
+      <!-- Walk list -->
+      <div v-if="walks.length > 0" class="mt-4 space-y-3">
+        <RouterLink
+          v-for="walk in walks"
+          :key="walk.id"
+          :to="`/walks/${walk.id}`"
+          class="block rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/80 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300"
+          :title="`Edit walk: ${walk.title || 'Walk'}`"
+        >
+          <div class="flex items-start gap-4">
+            <!-- Left: walk details -->
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-lg font-semibold">
+                {{ walk.title || "Walk" }}
+              </p>
 
-            <p class="mt-1 text-sm text-slate-600">
-              <span class="text-slate-900">{{ fmtWalkStart(walk.startedAt) }}</span>
-            </p>
+              <p class="mt-1 text-sm text-slate-600">
+                <span class="text-slate-900">{{ fmtWalkStart(walk.startedAt) }}</span>
+              </p>
 
-            <p class="mt-1 text-sm text-slate-600">
-              Distance:
-              <span class="text-slate-900">{{ fmtDistance(walk.distanceMeters) }}</span>
-            </p>
+              <p class="mt-1 text-sm text-slate-600">
+                Distance:
+                <span class="text-slate-900">{{ fmtDistance(walk.distanceMeters) }}</span>
+              </p>
 
-            <p v-if="walk.description" class="mt-2 text-sm text-slate-700">
-              {{ walk.description }}
-            </p>
+              <p v-if="walk.description" class="mt-2 text-sm text-slate-700">
+                {{ walk.description }}
+              </p>
 
-            <div class="mt-2 flex items-center gap-3">
-              <div v-if="dogPhotosForWalk(walk).length" class="flex -space-x-2">
-                <div
-                  v-for="d in dogPhotosForWalk(walk)"
-                  :key="d.photoUrl"
-                  class="h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-slate-100"
-                  :title="d.name"
-                >
-                  <img :src="d.photoUrl" alt="" class="h-full w-full object-cover" />
+              <div class="mt-2 flex items-center gap-3">
+                <div v-if="dogPhotosForWalk(walk).length" class="flex -space-x-2">
+                  <div
+                    v-for="d in dogPhotosForWalk(walk)"
+                    :key="d.photoUrl"
+                    class="h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-slate-100"
+                    :title="d.name"
+                  >
+                    <img :src="d.photoUrl" alt="" class="h-full w-full object-cover" />
+                  </div>
                 </div>
               </div>
-
-              <!-- If you ever want names too, you can add them back here -->
-              <!-- <div class="text-sm text-slate-600 truncate">
-                <span class="text-slate-900">{{ dogNamesForWalk(walk) }}</span>
-              </div> -->
             </div>
+
+            <!-- Right: first walk photo thumbnail -->
+            <img
+              v-if="walk.photos?.length && walk.photos[0]?.url"
+              :src="walk.photos[0].url"
+              alt=""
+              class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-slate-100 object-cover"
+              loading="lazy"
+            />
           </div>
+        </RouterLink>
+      </div>
 
-          <!-- Right: first walk photo thumbnail -->
-          <img
-            v-if="walk.photos?.length && walk.photos[0]?.url"
-            :src="walk.photos[0].url"
-            alt=""
-            class="h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-slate-100 object-cover"
-            loading="lazy"
-          />
-        </div>
-      </RouterLink>
-    </div>
-
-      <div v-if="walks.length === 0" class="mt-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center shadow-sm backdrop-blur">
-        <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-200 to-pink-200 text-3xl">
+      <!-- Empty state -->
+      <div
+        v-else
+        class="mt-6 rounded-2xl border border-white/60 bg-white/70 p-6 text-center shadow-sm backdrop-blur"
+      >
+        <div
+          class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-amber-200 to-pink-200 text-3xl"
+        >
           🐾
         </div>
 
-        <p class="mt-3 text-lg font-extrabold">
-          {{ hasDogs ? "No walks yet" : "Add a dog first" }}
-        </p>
+        <template v-if="!hasDogs">
+          <p class="mt-3 text-lg font-extrabold">Add a dog first</p>
+          <p class="mt-1 text-sm text-slate-700">
+            You’ll need at least one dog before you can save a walk.
+          </p>
 
-        <p class="mt-1 text-sm text-slate-700">
-          <span v-if="hasDogs">Add your first walk.</span>
-          <span v-else>You’ll need at least one dog before you can save a walk.</span>
-        </p>
+          <RouterLink
+            to="/dogs/new"
+            class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
+          >
+            Add a dog
+          </RouterLink>
+        </template>
 
-        <RouterLink
-          :to="hasDogs ? '/walks/new' : '/dogs/new'"
-          class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
-        >
-          {{ hasDogs ? "Add a walk" : "Add a dog" }}
-        </RouterLink>
+        <template v-else>
+          <p class="mt-3 text-lg font-extrabold">No walks yet</p>
+          <p class="mt-1 text-sm text-slate-700">Add your first walk.</p>
+
+          <RouterLink
+            to="/walks/new"
+            class="mt-4 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2 text-sm font-extrabold text-white shadow-sm"
+          >
+            Add a walk
+          </RouterLink>
+        </template>
       </div>
-    </div>
+    </template>
+  </div>
 </template>
