@@ -1,10 +1,17 @@
 <script setup>
 import { authState } from "./state/authState";
 import { signOutUser } from "./lib/auth";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import logo from "./assets/dog-pic.jpeg";
+import { computed } from "vue";
 
 const router = useRouter();
+const route = useRoute();
+
+const isDogsPage = computed(() => route.path.startsWith("/dogs"));
+const isWalksPage = computed(() =>
+  route.path === "/" || route.path.startsWith("/walks")
+);
 
 async function handleSignOut() {
   await signOutUser();
@@ -29,7 +36,22 @@ async function handleSignOut() {
         </RouterLink>
 
         <div v-if="authState.user" class="ml-auto flex items-center gap-3 text-sm">
-          <RouterLink class="text-slate-700 hover:text-slate-900" to="/dogs">My Dogs</RouterLink>
+          <RouterLink
+            v-if="isWalksPage"
+            class="text-slate-700 hover:text-slate-900"
+            to="/dogs"
+          >
+            My Dogs
+          </RouterLink>
+
+          <RouterLink
+            v-else-if="isDogsPage"
+            class="text-slate-700 hover:text-slate-900"
+            to="/walks"
+          >
+            My Walks
+          </RouterLink>
+
           <button
             class="rounded-md bg-slate-200 px-3 py-1.5"
             @click="handleSignOut"
