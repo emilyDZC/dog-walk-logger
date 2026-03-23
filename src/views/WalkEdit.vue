@@ -47,6 +47,13 @@ function isDogSelected(dogId) {
   return Array.isArray(form.value.dogIds) && form.value.dogIds.includes(dogId);
 }
 
+const hasSelectedDogs = computed(() => {
+  const ids = form.value?.dogIds;
+  return Array.isArray(ids) && ids.length > 0;
+});
+
+const showDogWarning = computed(() => !hasSelectedDogs.value);
+
 function toggleDog(dogId) {
   if (!Array.isArray(form.value.dogIds)) form.value.dogIds = [];
 
@@ -147,17 +154,14 @@ async function save() {
       error.value = "Invalid start time.";
       return;
     }
+    
     if (endedAt && endedAt < startedAt) {
       error.value = "End time cannot be before start time.";
       return;
     }
-    if (!form.value.dogIds.length) {
-      error.value = "Select at least one dog.";
-      return;
-    }
 
-    if (!Array.isArray(form.value.dogIds) || form.value.dogIds.length === 0) {
-      error.value = "Please select at least one dog before saving the walk.";
+    if (!hasSelectedDogs.value) {
+      error.value = "Please select at least one dog for this walk.";
       return;
     }
 
@@ -346,8 +350,8 @@ onMounted(load);
           </button>
         </div>
 
-        <p v-if="error && (!form.dogIds || form.dogIds.length === 0)" class="text-sm text-red-600">
-          {{ error }}
+        <p v-if="!hasSelectedDogs" class="text-sm font-semibold text-amber-700">
+          Please select at least one dog for this walk.
         </p>
       </section>
 
@@ -401,9 +405,10 @@ onMounted(load);
       </section>
 
       <button
-        class="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
-        type="submit"
-        :disabled="saving"
+        class="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        type="button"
+        :disabled="saving || !hasSelectedDogs"
+        @click="save"
       >
         {{ saving ? "Saving…" : "Save walk" }}
       </button>

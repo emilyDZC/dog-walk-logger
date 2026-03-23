@@ -134,7 +134,17 @@ onMounted(load);
               </p>
 
               <p v-if="walk.description" class="mt-2 text-sm text-slate-700">
-                {{ walk.description }}
+                <em>{{ walk.description }}</em>
+              </p>
+
+              <p v-if="walk.weather" class="mt-1 text-sm text-slate-600">
+                <span class="mr-1" aria-hidden="true">⛅</span>
+                <span class="text-slate-900">{{ walk.weather }}</span>
+              </p>
+
+              <p v-if="walk.groundConditions" class="mt-1 text-sm text-slate-600">
+                Ground:
+                <span class="text-slate-900">{{ walk.groundConditions }}</span>
               </p>
 
               <div class="mt-2 flex items-center gap-3">
