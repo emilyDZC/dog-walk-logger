@@ -41,6 +41,7 @@ const form = ref({
   groundConditions: "",
   ratings: {}, // ok to keep even if you’re not rendering ratings yet
   photos: [],
+  wildlifeSightings: [],
 });
 
 function isDogSelected(dogId) {
@@ -77,6 +78,7 @@ async function onWalkPhotoSelected(e) {
   }
 
   uploadingWalkPhoto.value = true;
+
   try {
     const res = await uploadWalkPhoto(uid.value, walkId.value, file);
     // update local state immediately so user sees it without reload
@@ -87,6 +89,40 @@ async function onWalkPhotoSelected(e) {
   } finally {
     uploadingWalkPhoto.value = false;
   }
+}
+
+const addingWildlife = ref(false);
+
+const newWildlife = ref({
+  label: "",
+  description: "",
+});
+
+function addWildlifeSighting() {
+  const label = newWildlife.value.label.trim();
+  const description = newWildlife.value.description.trim();
+
+  if (!label) {
+    error.value = "Please enter some text or select a label.";
+    return;
+  }
+
+  const sighting = {
+    id: crypto.randomUUID(),
+    label,
+    description,
+    createdAt: new Date().toISOString(),
+  };
+
+  form.value.wildlifeSightings = [...(form.value.wildlifeSightings ?? []), sighting];
+
+  // reset UI
+  newWildlife.value = { label: "", description: "" };
+  addingWildlife.value = false;
+}
+
+function removeWildlifeSighting(id) {
+  form.value.wildlifeSightings = (form.value.wildlifeSightings ?? []).filter((s) => s.id !== id);
 }
 
 async function load() {
@@ -119,6 +155,7 @@ async function load() {
         groundConditions: walk.groundConditions ?? "",
         ratings: walk.ratings ?? {},
         photos: walk.photos ?? [],
+        wildlifeSightings: walk.wildlifeSightings ?? [],
       };
     } else {
       if (!Array.isArray(form.value.dogIds)) form.value.dogIds = [];
@@ -154,7 +191,7 @@ async function save() {
       error.value = "Invalid start time.";
       return;
     }
-    
+
     if (endedAt && endedAt < startedAt) {
       error.value = "End time cannot be before start time.";
       return;
@@ -184,6 +221,7 @@ async function save() {
         groundConditions: form.value.groundConditions,
         source: "manual",
         ratings: form.value.ratings ?? {},
+        wildlifeSightings: form.value.wildlifeSightings ?? [],
     };
 
     if (isNew.value) {
@@ -352,6 +390,89 @@ onMounted(load);
 
         <p v-if="!hasSelectedDogs" class="text-sm font-semibold text-amber-700">
           Please select at least one dog for this walk.
+        </p>
+      </section>
+
+      <section class="rounded-xl border bg-white p-4 space-y-3">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-semibold">Wildlife sightings</h2>
+
+          <button
+            type="button"
+            class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+            @click="addingWildlife = !addingWildlife"
+          >
+            {{ addingWildlife ? "Cancel" : "Add wildlife sighting" }}
+          </button>
+        </div>
+
+        <!-- Existing sightings -->
+        <div v-if="(form.wildlifeSightings?.length ?? 0) > 0" class="space-y-2">
+          <div
+            v-for="s in form.wildlifeSightings"
+            :key="s.id"
+            class="rounded-lg border bg-slate-50 p-3"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-semibold text-slate-900">{{ s.label }}</p>
+                <p v-if="s.description" class="mt-1 text-sm text-slate-700">
+                  {{ s.description }}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                :aria-label="`Remove wildlife sighting: ${s.label}`"
+                title="Remove"
+                @click="removeWildlifeSighting(s.id)"
+              >
+                <span aria-hidden="true" class="text-xl leading-none">×</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add wildlife form -->
+        <div v-if="addingWildlife" class="rounded-lg border bg-white p-3 space-y-2">
+          <label class="block">
+            <span class="text-sm text-slate-700">What did you see? *</span>
+            <input
+              v-model="newWildlife.label"
+              class="mt-1 w-full rounded-lg border p-2"
+              placeholder="e.g. Deer, Rabbit, Heron"
+              list="wildlife-suggestions"
+            />
+            <datalist id="wildlife-suggestions">
+              <!-- we’ll fill this in next step -->
+            </datalist>
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-slate-700">Description</span>
+            <textarea
+              v-model="newWildlife.description"
+              class="mt-1 w-full rounded-lg border p-2"
+              rows="3"
+              placeholder="Any notes..."
+            />
+          </label>
+
+          <button
+            type="button"
+            class="w-full rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white"
+            @click="addWildlifeSighting"
+          >
+            Add sighting
+          </button>
+          <p class="text-xs text-slate-500">
+            You still need to save the walk after this step.
+          </p>
+        </div>
+
+        <p v-else class="text-xs text-slate-500">
+          Log any wildlife you saw on this walk.
         </p>
       </section>
 

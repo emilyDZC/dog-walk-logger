@@ -53,6 +53,8 @@ export async function getWalk(uid, walkId) {
 }
 
 export async function createWalk(uid, data) {
+  const wildlifeSightings = Array.isArray(data.wildlifeSightings) ? data.wildlifeSightings : [];
+
   const payload = {
     title: data.title ?? "",
     weather: data.weather ?? "",
@@ -64,10 +66,7 @@ export async function createWalk(uid, data) {
     startedAt: data.startedAt ? Timestamp.fromDate(data.startedAt) : null,
     endedAt: data.endedAt ? Timestamp.fromDate(data.endedAt) : null,
 
-    distanceMeters:
-        data.distanceMeters === "" || data.distanceMeters == null
-        ? null
-        : Number(data.distanceMeters),
+    distanceMeters: data.distanceMeters === "" || data.distanceMeters == null ? null : Number(data.distanceMeters),
 
     description: data.description ?? "",
 
@@ -78,6 +77,7 @@ export async function createWalk(uid, data) {
     updatedAt: serverTimestamp(),
 
     photos: [],
+    wildlifeSightings,
   };
 
   const ref = await addDoc(walksCol(uid), payload);
@@ -85,6 +85,8 @@ export async function createWalk(uid, data) {
 }
 
 export async function updateWalk(uid, walkId, data) {
+  const wildlifeSightings = Array.isArray(data.wildlifeSightings) ? data.wildlifeSightings : [];
+
   const payload = {
     title: data.title ?? "",
     weather: data.weather ?? "",
@@ -95,17 +97,16 @@ export async function updateWalk(uid, walkId, data) {
     startedAt: data.startedAt ? Timestamp.fromDate(data.startedAt) : null,
     endedAt: data.endedAt ? Timestamp.fromDate(data.endedAt) : null,
 
-    distanceMeters:
-        data.distanceMeters === "" || data.distanceMeters == null
-        ? null
-        : Number(data.distanceMeters),
+    distanceMeters: data.distanceMeters === "" || data.distanceMeters == null ? null : Number(data.distanceMeters),
 
     description: data.description ?? "",
 
     ratings: data.ratings ?? {},
 
+    wildlifeSightings,
+
     updatedAt: serverTimestamp(),
-    };
+  };
 
   await updateDoc(walkDoc(uid, walkId), payload);
 }
