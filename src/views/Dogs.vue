@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { authState } from "../state/authState";
 import { listDogs, removeDog } from "../lib/dogs";
@@ -15,6 +15,11 @@ const toast = ref("");
 const uid = computed(() => authState.user?.uid);
 
 async function load() {
+  if (!uid.value) {
+    loading.value = true;
+    return;
+  }
+
   loading.value = true;
   error.value = "";
   try {
@@ -38,8 +43,12 @@ async function deleteDog(dog) {
   }
 }
 
+watch(uid, (newUid) => {
+  if (newUid) load();
+}, { immediate: true });
+
 onMounted(() => {
-  load();
+  // load();
 
   const msg = route.query.toast;
   if (typeof msg === "string" && msg.trim()) {
@@ -73,7 +82,7 @@ onMounted(() => {
 
 
     <div v-else class="mt-4 space-y-3">
-      
+
       <div
         v-if="toast"
         class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"

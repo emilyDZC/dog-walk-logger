@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { authState } from "../state/authState";
 import { listWalks } from "../lib/walks";
 import { listDogs } from "../lib/dogs";
@@ -62,6 +62,11 @@ function dogPhotosForWalk(walk) {
 }
 
 async function load() {
+  if (!uid.value) {
+    loading.value = true;
+    return;
+  }
+
   loading.value = true;
   error.value = "";
   try {
@@ -86,7 +91,11 @@ async function load() {
   }
 }
 
-onMounted(load);
+watch(uid, (newUid) => {
+  if (newUid) load();
+}, { immediate: true });
+
+// onMounted(load);
 </script>
 
 <template>
