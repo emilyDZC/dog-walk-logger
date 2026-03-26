@@ -42,6 +42,7 @@ const form = ref({
   ratings: {}, // ok to keep even if you’re not rendering ratings yet
   photos: [],
   wildlifeSightings: [],
+  weatherTags: [],
 });
 
 function isDogSelected(dogId) {
@@ -125,6 +126,35 @@ function removeWildlifeSighting(id) {
   form.value.wildlifeSightings = (form.value.wildlifeSightings ?? []).filter((s) => s.id !== id);
 }
 
+const weatherOptions = [
+  { key: "sun", label: "Sunny", icon: "☀️" },
+  { key: "wind", label: "Windy", icon: "💨" },
+  { key: "rain", label: "Rain", icon: "🌧️" },
+  { key: "cloud", label: "Cloudy", icon: "☁️" },
+  { key: "snow", label: "Snow", icon: "❄️" },
+];
+
+function isWeatherSelected(key) {
+  return Array.isArray(form.value.weatherTags) && form.value.weatherTags.includes(key);
+}
+
+function toggleWeather(key) {
+  const tags = Array.isArray(form.value.weatherTags) ? form.value.weatherTags : [];
+
+  const next = tags.includes(key)
+    ? tags.filter((t) => t !== key)
+    : [...tags, key];
+
+  form.value.weatherTags = next;
+
+  // keep your existing display/storage string in sync (optional)
+  const labels = next
+    .map((k) => weatherOptions.find((o) => o.key === k)?.label)
+    .filter(Boolean);
+
+  form.value.weather = labels.join(", ");
+}
+
 async function load() {
   loading.value = true;
   error.value = "";
@@ -156,6 +186,7 @@ async function load() {
         ratings: walk.ratings ?? {},
         photos: walk.photos ?? [],
         wildlifeSightings: walk.wildlifeSightings ?? [],
+        weatherTags: walk.weatherTags ?? [],
       };
     } else {
       if (!Array.isArray(form.value.dogIds)) form.value.dogIds = [];
@@ -222,6 +253,7 @@ async function save() {
         source: "manual",
         ratings: form.value.ratings ?? {},
         wildlifeSightings: form.value.wildlifeSightings ?? [],
+        weatherTags: form.value.weatherTags ?? [],
     };
 
     if (isNew.value) {
@@ -330,12 +362,34 @@ onMounted(load);
             <h2 class="font-semibold">Conditions</h2>
 
             <label class="block">
-                <span class="text-sm text-slate-700">Weather</span>
-                <input
-                v-model="form.weather"
-                class="mt-1 w-full rounded-lg border p-2"
-                placeholder="e.g. Sunny, light rain"
-                />
+              <span class="text-sm text-slate-700">Weather</span>
+
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <button
+                    v-for="opt in weatherOptions"
+                    :key="opt.key"
+                    type="button"
+                    class="grid h-12 w-12 place-items-center rounded-full border transition"
+                    :class="
+                      isWeatherSelected(opt.key)
+                        ? 'border-amber-300 bg-amber-50 ring-2 ring-amber-200'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                    "
+                    :aria-pressed="isWeatherSelected(opt.key)"
+                    :aria-label="opt.label"
+                    :title="opt.label"
+                    @click="toggleWeather(opt.key)"
+                  >
+                    <span aria-hidden="true" class="text-2xl leading-none">
+                      {{ opt.icon }}
+                    </span>
+                  </button>
+                </div>
+
+                <!-- optional -->
+                <p v-if="form.weather" class="mt-2 text-xs text-slate-500">
+                  Selected: <span class="text-slate-700">{{ form.weather }}</span>
+                </p>
             </label>
 
             <label class="block">

@@ -13,6 +13,19 @@ const dogNameById = ref({});
 const dogById = ref({});
 const hasDogs = ref(false);
 
+const weatherIconByTag = {
+  sun: "☀️",
+  wind: "💨",
+  rain: "🌧️",
+  cloud: "☁️",
+  snow: "❄️",
+};
+
+function weatherIconsForWalk(walk) {
+  const tags = Array.isArray(walk.weatherTags) ? walk.weatherTags : [];
+  return tags.map((t) => weatherIconByTag[t]).filter(Boolean);
+}
+
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
@@ -146,10 +159,18 @@ watch(uid, (newUid) => {
                 <em>{{ walk.description }}</em>
               </p>
 
-              <p v-if="walk.weather" class="mt-1 text-sm text-slate-600">
-                <span class="mr-1" aria-hidden="true">⛅</span>
-                <span class="text-slate-900">{{ walk.weather }}</span>
-              </p>
+             <div v-if="weatherIconsForWalk(walk).length" class="mt-1 flex items-center gap-1 text-xl">
+                <span
+                  v-for="(icon, idx) in weatherIconsForWalk(walk)"
+                  :key="idx"
+                  aria-hidden="true"
+                >
+                  {{ icon }}
+                </span>
+                <span class="sr-only">
+                  Weather: {{ (walk.weatherTags ?? []).join(", ") }}
+                </span>
+              </div>
 
               <p v-if="walk.groundConditions" class="mt-1 text-sm text-slate-600">
                 Ground:

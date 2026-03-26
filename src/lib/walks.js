@@ -54,6 +54,7 @@ export async function getWalk(uid, walkId) {
 
 export async function createWalk(uid, data) {
   const wildlifeSightings = Array.isArray(data.wildlifeSightings) ? data.wildlifeSightings : [];
+  const weatherTags = Array.isArray(data.weatherTags) ? data.weatherTags : [];
 
   const payload = {
     title: data.title ?? "",
@@ -78,6 +79,7 @@ export async function createWalk(uid, data) {
 
     photos: [],
     wildlifeSightings,
+    weatherTags,
   };
 
   const ref = await addDoc(walksCol(uid), payload);
@@ -86,6 +88,7 @@ export async function createWalk(uid, data) {
 
 export async function updateWalk(uid, walkId, data) {
   const wildlifeSightings = Array.isArray(data.wildlifeSightings) ? data.wildlifeSightings : [];
+  const weatherTags = Array.isArray(data.weatherTags) ? data.weatherTags : [];
 
   const payload = {
     title: data.title ?? "",
@@ -104,6 +107,8 @@ export async function updateWalk(uid, walkId, data) {
     ratings: data.ratings ?? {},
 
     wildlifeSightings,
+
+    weatherTags,
 
     updatedAt: serverTimestamp(),
   };
