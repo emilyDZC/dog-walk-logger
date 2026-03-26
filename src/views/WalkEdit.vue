@@ -138,7 +138,16 @@ function isWeatherSelected(key) {
   return Array.isArray(form.value.weatherTags) && form.value.weatherTags.includes(key);
 }
 
+function hapticTick() {
+  // Only some browsers/devices support this
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(10); // 5–15ms feels like a light tick
+  }
+}
+
 function toggleWeather(key) {
+  hapticTick();
+  
   const tags = Array.isArray(form.value.weatherTags) ? form.value.weatherTags : [];
 
   const next = tags.includes(key)
